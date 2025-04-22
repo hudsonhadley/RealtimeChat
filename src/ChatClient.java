@@ -53,6 +53,10 @@ public class ChatClient {
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
+
+                if (message.equals("quit")) {
+                    break;
+                }
             }
         });
         consoleThread.start();
@@ -73,9 +77,16 @@ public class ChatClient {
      */
     public boolean receive() throws IOException {
         ChatMessage received = ChatMessage.getPackage(input);
-        System.out.println();
-        System.out.println(received.getSender() + "> " + received.getMessage());
-        System.out.print(name + "> ");
+        String sender = received.getSender();
+        String message = received.getMessage();
+        if (!sender.equals(name)) {
+            System.out.println();
+            System.out.println(sender + "> " + message);
+            System.out.print(name + "> ");
+        } else if (message.equals("quit")) {
+            return false;
+        }
+
         return true;
     }
 
