@@ -43,7 +43,19 @@ public class ChatClient {
      * Begins the thread that will read input from the console and send it
      */
     public void startConsoleThread() {
-
+        Scanner inScanner = new Scanner(System.in);
+        Thread consoleThread = new Thread(() -> {
+            while (true) {
+                System.out.print(name + "> ");
+                String message = inScanner.nextLine();
+                try {
+                    sendMessage(message);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        });
+        consoleThread.start();
     }
 
     /**
@@ -51,6 +63,7 @@ public class ChatClient {
      * @throws IOException if an error occurs during receiving
      */
     public void socketStart() throws IOException {
+        while (receive());
     }
 
     /**
@@ -59,7 +72,11 @@ public class ChatClient {
      * @throws IOException if an error occurs during receiving
      */
     public boolean receive() throws IOException {
-        return false;
+        ChatMessage received = ChatMessage.getPackage(input);
+        System.out.println();
+        System.out.println(received.getSender() + "> " + received.getMessage());
+        System.out.print(name + "> ");
+        return true;
     }
 
     /**

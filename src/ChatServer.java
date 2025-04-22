@@ -30,29 +30,33 @@ public class ChatServer {
      * @throws IOException if an error occurs in the server
      */
     public void start() throws IOException {
-        Socket clientSocket = serverSocket.accept();
-        DataInputStream input = new DataInputStream(clientSocket.getInputStream());
-        DataOutputStream output = new DataOutputStream(clientSocket.getOutputStream());
-        // Get their name
-        boolean approved = false;
-        while (!approved) {
-            ChatMessage namePackage = ChatMessage.getPackage(input);
+        while (true) {
+            Socket clientSocket = serverSocket.accept();
+            DataInputStream input = new DataInputStream(clientSocket.getInputStream());
+            DataOutputStream output = new DataOutputStream(clientSocket.getOutputStream());
 
-            String name = namePackage.getSender();
+            String name = ""; // Will get initialized
+            // Get their name
+            boolean approved = false;
+            while (!approved) {
+                ChatMessage namePackage = ChatMessage.getPackage(input);
 
-            if (validName(name)) {
-                activeClients.put(name, clientSocket);
-                // Give approval
-                ChatMessage approval = new ChatMessage("server", "approved");
-                for (byte b : approval.flatten()) {
-                    output.writeByte(b);
+                name = namePackage.getSender();
+
+                if (validName(name)) {
+                    activeClients.put(name, clientSocket);
+                    // Give approval
+                    ChatMessage approval = new ChatMessage("server", "approved");
+                    for (byte b : approval.flatten()) {
+                        output.writeByte(b);
+                    }
+                    output.flush();
+                    approved = true;
+                    System.out.println(name + " connected");
                 }
-                output.flush();
-                approved = true;
-                System.out.println(name + " connected");
             }
+            startClientThread(name);
         }
-
 
     }
 
@@ -71,6 +75,22 @@ public class ChatServer {
      * @throws IOException if an error occurs during sending
      */
     private void broadcast(String originName, String message) throws IOException {
+        broadcast(new ChatMessage(originName, message));
+    }
+
+    /**
+     * Broadcasts a message to every client (including the one that sent it)
+     * @param messagePacket the ChatMessage to broadcast
+     */
+    private void broadcast(ChatMessage messagePacket) throws IOException {
+        for (String client : activeClients.keySet()) {
+            DataOutputStream output = new DataOutputStream(activeClients.get(client).getOutputStream());
+
+            for (byte b : messagePacket.flatten()) {
+                output.writeByte(b);
+            }
+            output.flush();
+        }
     }
 
     /**
@@ -79,7 +99,21 @@ public class ChatServer {
      * @param name
      */
     private void startClientThread(String name) {
+        Thread clientThread = new Thread(() -> {
+            try {
+                DataInputStream input = new DataInputStream(activeClients.get(name).getInputStream());
+                while (true) {
+                    ChatMessage receivedPackage = ChatMessage.getPackage(input);
+                    System.out.println(receivedPackage.getSender() + "> " + receivedPackage.getMessage());
+                    broadcast(receivedPackage);
+                }
 
+            } catch (IOException e) {
+                System.out.println(name + " disconnected");
+                activeClients.remove(name);
+            }
+        });
+        clientThread.start();
     }
 
 
