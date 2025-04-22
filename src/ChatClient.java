@@ -80,6 +80,19 @@ public class ChatClient {
         return true;
     }
 
+    public boolean setName(String name) throws IOException {
+        sendMessage("");
+
+        // Server will send true if the name is okay
+        if (input.readBoolean()) {
+            this.name = name;
+            return true;
+        } else {
+            return false;
+        }
+
+    }
+
     public static void main(String[] args) throws IOException {
         Scanner inScanner = new Scanner(System.in);
 
@@ -110,6 +123,16 @@ public class ChatClient {
         }
 
         ChatClient client = new ChatClient(serverIP, port);
-        System.out.println("Connected!");
+        boolean approvedName = false;
+        while (!approvedName) {
+            System.out.print("Enter name> ");
+            String name = inScanner.nextLine();
+            
+            if (client.setName(name)) {
+                approvedName = true;
+            }
+        }
+        client.startConsoleThread();
+        client.socketStart();
     }
 }
