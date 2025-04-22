@@ -32,6 +32,11 @@ public class ChatClient {
      * @throws IOException if an error occurs during sending
      */
     public void sendMessage(String message) throws IOException {
+        ChatMessage messagePackage = new ChatMessage(name, message);
+        for (byte b : messagePackage.flatten()) {
+            output.writeByte(b);
+        }
+        output.flush();
     }
 
     /**
@@ -81,13 +86,15 @@ public class ChatClient {
     }
 
     public boolean setName(String name) throws IOException {
+        this.name = name;
         sendMessage("");
 
+        ChatMessage received = ChatMessage.getPackage(input);
         // Server will send true if the name is okay
-        if (input.readBoolean()) {
-            this.name = name;
+        if (received.getMessage().equals("approved")) {
             return true;
         } else {
+            this.name = null;
             return false;
         }
 
@@ -127,7 +134,7 @@ public class ChatClient {
         while (!approvedName) {
             System.out.print("Enter name> ");
             String name = inScanner.nextLine();
-            
+
             if (client.setName(name)) {
                 approvedName = true;
             }

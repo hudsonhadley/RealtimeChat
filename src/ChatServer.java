@@ -31,6 +31,37 @@ public class ChatServer {
      */
     public void start() throws IOException {
         Socket clientSocket = serverSocket.accept();
+        DataInputStream input = new DataInputStream(clientSocket.getInputStream());
+        DataOutputStream output = new DataOutputStream(clientSocket.getOutputStream());
+        // Get their name
+        boolean approved = false;
+        while (!approved) {
+            ChatMessage namePackage = ChatMessage.getPackage(input);
+
+            String name = namePackage.getSender();
+
+            if (validName(name)) {
+                activeClients.put(name, clientSocket);
+                // Give approval
+                ChatMessage approval = new ChatMessage("server", "approved");
+                for (byte b : approval.flatten()) {
+                    output.writeByte(b);
+                }
+                output.flush();
+                approved = true;
+                System.out.println(name + " connected");
+            }
+        }
+
+
+    }
+
+    private boolean validName(String name) {
+        if (name.contains(">") || activeClients.containsKey(name)) {
+            return false;
+        }
+
+        return true;
     }
 
     /**
@@ -75,6 +106,5 @@ public class ChatServer {
         System.out.printf("Host: %s\n", server.HOST);
         System.out.printf("Port: %d\n", server.PORT);
         server.start();
-        System.out.println("Connected!");
     }
 }
