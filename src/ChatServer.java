@@ -30,6 +30,7 @@ public class ChatServer {
      * @throws IOException if an error occurs in the server
      */
     public void start() throws IOException {
+        Socket clientSocket = serverSocket.accept();
     }
 
     /**
@@ -52,6 +53,28 @@ public class ChatServer {
 
 
     public static void main(String[] args) throws IOException {
+        Scanner inScanner = new Scanner(System.in);
+        System.out.print("Enter port> ");
+        int port;
+        while (true) {
+            try {
+                port = Integer.parseInt(inScanner.nextLine());
 
+                if (port >= 0) {
+                    break;
+                } else {
+                    System.out.println("Invalid port");
+                }
+            } catch (NumberFormatException nfe) {
+                System.out.println("Invalid port");
+            }
+        }
+
+        ChatServer server = new ChatServer(port);
+        System.out.println("Starting server:");
+        System.out.printf("Host: %s\n", server.HOST);
+        System.out.printf("Port: %d\n", server.PORT);
+        server.start();
+        System.out.println("Connected!");
     }
 }

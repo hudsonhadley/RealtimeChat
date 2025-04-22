@@ -80,7 +80,36 @@ public class ChatClient {
         return true;
     }
 
-    public static void main(String[] args) {
-        // TODO: Main loop
+    public static void main(String[] args) throws IOException {
+        Scanner inScanner = new Scanner(System.in);
+
+        // Get host and port info
+        System.out.print("Enter server ip> ");
+        String serverIP = inScanner.nextLine();
+
+        while (!validIP(serverIP)) {
+            System.out.println("Invalid IP");
+            System.out.print("Enter server ip> ");
+            serverIP = inScanner.nextLine();
+        }
+
+        System.out.print("Enter port> ");
+        int port;
+        while (true) {
+            try {
+                port = Integer.parseInt(inScanner.nextLine());
+
+                if (port >= 0) {
+                    break;
+                } else {
+                    System.out.println("Invalid port");
+                }
+            } catch (NumberFormatException nfe) {
+                System.out.println("Invalid port");
+            }
+        }
+
+        ChatClient client = new ChatClient(serverIP, port);
+        System.out.println("Connected!");
     }
 }
