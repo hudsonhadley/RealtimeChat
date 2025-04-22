@@ -1,3 +1,5 @@
+import java.io.DataInputStream;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
 /**
@@ -18,17 +20,28 @@ public class ChatMessage {
         this.message = message;
     }
 
-    public ChatMessage(byte[] rawData) {
-        int lengthOfHeader = rawData[0];
-        int lengthOfBody = rawData[lengthOfHeader];
+    public ChatMessage(byte headerLength, byte bodyLength, byte[] rawData) {
+        sender = new String(rawData, 0, headerLength);
+        message = new String(rawData, headerLength, bodyLength);
+    }
 
-        sender = new String(rawData, 0, lengthOfHeader);
-        message = new String(rawData, lengthOfHeader+1, lengthOfBody);
+    public static ChatMessage getPackage(DataInputStream input) throws IOException {
+        byte headerLength = input.readByte();
+        byte bodyLength = input.readByte();
+        return new ChatMessage(headerLength, bodyLength, input.readNBytes(headerLength+bodyLength));
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
+    public String getSender() {
+        return sender;
     }
 
     /**
      * Produces a byte array of data based on the sender and message. The byte array's first byte is how many bytes
-     * long the header is. Then is the header. Then is how many bytes long the body is. Then is the body.
+     * long the header is. Then is how many bytes long the body is. Then is the header. Then is the body.
      * @return The byte array of data to send
      */
     public byte[] flatten() {
@@ -37,16 +50,15 @@ public class ChatMessage {
 
         // Format is (length of header)header(length of body)body
         byte[] fullMessage = new byte[1 + header.length + 1 + body.length];
-        fullMessage[0] = (byte) header.length;
+        fullMessage[0] = (byte) (header.length);
+        fullMessage[1] = (byte) (body.length);
 
         for (int i = 0; i < header.length; i++) {
-            fullMessage[1 + i] = header[i];
+            fullMessage[2 + i] = header[i];
         }
 
-        fullMessage[header.length] = (byte) body.length;
-
         for (int i = 0; i < body.length; i++) {
-            fullMessage[header.length+1 + i] = body[i];
+            fullMessage[2+header.length + i] = body[i];
         }
 
         return fullMessage;
