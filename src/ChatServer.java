@@ -53,6 +53,13 @@ public class ChatServer {
                     output.flush();
                     approved = true;
                     System.out.println(name + " connected");
+                } else {
+                    // Say we don't approve
+                    ChatMessage disallowed = new ChatMessage("server", "disallowed");
+                    for (byte b : disallowed.flatten()) {
+                        output.writeByte(b);
+                    }
+                    output.flush();
                 }
             }
             startClientThread(name);

@@ -165,6 +165,8 @@ public class ChatClient {
 
             if (client.setName(name)) {
                 approvedName = true;
+            } else {
+                System.out.println("Name already in use");
             }
         }
         client.startConsoleThread();
